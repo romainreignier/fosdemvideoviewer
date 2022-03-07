@@ -13,18 +13,16 @@ done
 selected_year=$(echo $years_list | tr ' ' '\n' | fzf --reverse --prompt="Year:")
 echo "Selected Year: $selected_year"
 
-selected_day=$(printf "1\n2\n" | fzf --reverse --prompt="Day:")
-echo "Selected Day: $selected_day"
-
 schedule_xml=$(curl -s -L --compressed https://fosdem.org/$selected_year/schedule/xml)
 
-selected_room=$(echo $schedule_xml | xmlstarlet sel -t -v "//day[@index=$selected_day]/room/@name" | fzf --reverse --prompt="Room:")
-echo "Selected room: $selected_room"
+selected_track=$(echo $schedule_xml | xmlstarlet sel -t -v "//track" | uniq | fzf --reverse --prompt="Track:")
+echo "Selected track: $selected_track"
 
-selected_talk=$(echo $schedule_xml | xmlstarlet sel -t -v "//day[@index=$selected_day]/room[@name=\"$selected_room\"]/event/title" | fzf --reverse --prompt="Talk:")
+selected_talk=$(echo $schedule_xml | xmlstarlet sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")
 echo "Selected talk: $selected_talk"
 
-video_link=$(echo $schedule_xml | xmlstarlet sel -t -v "//day[@index=$selected_day]/room[@name=\"$selected_room\"]/event[title=\"$selected_talk\"]/links/link[1]/@href")
+video_link=$(echo $schedule_xml | xmlstarlet sel -t -v "//event[title=\"$selected_talk\"]/links/link[1]/@href")
 echo "Video link: $video_link"
 
 mpv $video_link
+

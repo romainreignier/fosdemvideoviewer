@@ -1,8 +1,44 @@
 #!/bin/sh
 
+# Exit on error or Ctrl+C
+set -e
+
+# from ytfzf
+command_exists () {
+    command -v "$1" > /dev/null 2>&1
+}
+
+die () {
+    _return_status=$1
+    printf "$2" >&2
+    exit "$_return_status"
+}
+
+# Check dependencies
+for dep in curl fzf mpv; do
+    command_exists "$dep" || die 3 "$dep is a required dependency, please install it\n"
+done
+
+# On Ubuntu, xmlstarlet is installed as 'xmlstarlet' while as 'xml' on Alpine
+XML_CMD="xml"
+if ! command_exists "$XML_CMD"; then
+    XML_CMD="xmlstarlet"
+    if ! command_exists "$XML_CMD"; then
+        die 3 "xmlstarlet is a required dependency, please install it\n"
+    fi
+fi
+
+# Generate FOSDEM years list
 years_list=$(
 start_year=2012
 current_year=$(date +%Y)
+current_month=$(date +%m)
+
+# Check if FOSDEM happened this year
+if [ $current_month -lt 2 ]; then
+    current_year=$((current_year - 1))
+fi
+
 year=$start_year
 while [ $year -le $current_year ]; do
     printf "$year\n"
@@ -13,15 +49,16 @@ done
 selected_year=$(echo $years_list | tr ' ' '\n' | fzf --reverse --prompt="Year:")
 echo "Selected Year: $selected_year"
 
-schedule_xml=$(curl -s -L --compressed https://fosdem.org/$selected_year/schedule/xml)
+# Download the schedule
+schedule_xml=$(curl -s -L --compressed https://fosdem.org/"$selected_year"/schedule/xml)
 
-selected_track=$(echo $schedule_xml | xmlstarlet sel -t -v "//track" | uniq | fzf --reverse --prompt="Track:")
+selected_track=$(echo $schedule_xml | $XML_CMD sel -t -v "//track" | uniq | fzf --reverse --prompt="Track:")
 echo "Selected track: $selected_track"
 
-selected_talk=$(echo $schedule_xml | xmlstarlet sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")
+selected_talk=$(echo $schedule_xml | $XML_CMD sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")
 echo "Selected talk: $selected_talk"
 
-video_link=$(echo $schedule_xml | xmlstarlet sel -t -v "//event[title=\"$selected_talk\"]/links/link[1]/@href")
+video_link=$(echo $schedule_xml | $XML_CMD sel -t -v "//event[title=\"$selected_talk\"]/links/link[1]/@href")
 echo "Video link: $video_link"
 
 mpv $video_link

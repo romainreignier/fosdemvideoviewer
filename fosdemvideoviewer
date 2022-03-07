@@ -1,0 +1,30 @@
+#!/bin/sh
+
+years_list=$(
+start_year=2012
+current_year=$(date +%Y)
+year=$start_year
+while [ $year -le $current_year ]; do
+    printf "$year\n"
+    year=$((year + 1))
+done
+)
+
+selected_year=$(echo $years_list | tr ' ' '\n' | fzf --reverse --prompt="Year:")
+echo "Selected Year: $selected_year"
+
+selected_day=$(printf "1\n2\n" | fzf --reverse --prompt="Day:")
+echo "Selected Day: $selected_day"
+
+schedule_xml=$(curl -s -L --compressed https://fosdem.org/$selected_year/schedule/xml)
+
+selected_room=$(echo $schedule_xml | xmlstarlet sel -t -v "//day[@index=$selected_day]/room/@name" | fzf --reverse --prompt="Room:")
+echo "Selected room: $selected_room"
+
+selected_talk=$(echo $schedule_xml | xmlstarlet sel -t -v "//day[@index=$selected_day]/room[@name=\"$selected_room\"]/event/title" | fzf --reverse --prompt="Talk:")
+echo "Selected talk: $selected_talk"
+
+video_link=$(echo $schedule_xml | xmlstarlet sel -t -v "//day[@index=$selected_day]/room[@name=\"$selected_room\"]/event[title=\"$selected_talk\"]/links/link[1]/@href")
+echo "Video link: $video_link"
+
+mpv $video_link

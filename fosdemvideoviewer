@@ -52,7 +52,7 @@ echo "Selected Year: $selected_year"
 # Download the schedule
 schedule_xml=$(curl -s -L --compressed https://fosdem.org/"$selected_year"/schedule/xml)
 
-selected_track=$(echo $schedule_xml | $XML_CMD sel -t -v "//track" | uniq | fzf --reverse --prompt="Track:")
+selected_track=$(echo "$schedule_xml" | $XML_CMD sel -t -v "//track" | sort -u | fzf --reverse --prompt="Track:")
 echo "Selected track: $selected_track"
 
 selected_talk=$(echo $schedule_xml | $XML_CMD sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")

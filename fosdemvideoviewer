@@ -29,37 +29,29 @@ if ! command_exists "$XML_CMD"; then
 fi
 
 # Generate FOSDEM years list
-years_list=$(
 start_year=2012
 current_year=$(date +%Y)
 current_month=$(date +%m)
-
 # Check if FOSDEM happened this year
-if [ $current_month -lt 2 ]; then
+if [ "$current_month" -lt 2 ]; then
     current_year=$((current_year - 1))
 fi
-
 year=$start_year
-while [ $year -le $current_year ]; do
-    printf "$year\n"
-    year=$((year + 1))
-done
-)
-
-selected_year=$(echo $years_list | tr ' ' '\n' | fzf --reverse --prompt="Year:")
+selected_year=$(while [ "$year" -le "$current_year" ]; do echo "$year"; year=$((year + 1)); done | fzf --reverse --prompt="Year:")
 echo "Selected Year: $selected_year"
 
 # Download the schedule
 schedule_xml=$(curl -s -L --compressed https://fosdem.org/"$selected_year"/schedule/xml)
 
+echo "Schedule downloaded"
+
 selected_track=$(echo "$schedule_xml" | $XML_CMD sel -t -v "//track" | sort -u | fzf --reverse --prompt="Track:")
 echo "Selected track: $selected_track"
 
-selected_talk=$(echo $schedule_xml | $XML_CMD sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")
+selected_talk=$(echo "$schedule_xml" | $XML_CMD sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")
 echo "Selected talk: $selected_talk"
 
 video_link=$(echo "$schedule_xml" | $XML_CMD sel -t -m "//event[title=\"$selected_talk\"]/links/link[contains(@href, \"webm\")]" -v @href)
 echo "Video link: $video_link"
 
-mpv $video_link
-
+mpv "$video_link"

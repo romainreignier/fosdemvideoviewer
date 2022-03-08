@@ -58,7 +58,7 @@ echo "Selected track: $selected_track"
 selected_talk=$(echo $schedule_xml | $XML_CMD sel -t -m "//event[track=\"$selected_track\"]" -v title -n | fzf --reverse --prompt="Talk:")
 echo "Selected talk: $selected_talk"
 
-video_link=$(echo $schedule_xml | $XML_CMD sel -t -v "//event[title=\"$selected_talk\"]/links/link[1]/@href")
+video_link=$(echo "$schedule_xml" | $XML_CMD sel -t -m "//event[title=\"$selected_talk\"]/links/link[contains(@href, \"webm\")]" -v @href)
 echo "Video link: $video_link"
 
 mpv $video_link

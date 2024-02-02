@@ -41,7 +41,8 @@ selected_year=$(while [ "$year" -le "$current_year" ]; do echo "$year"; year=$((
 echo "Selected Year: $selected_year"
 
 # Download the schedule
-schedule_xml=$(curl -s -L --compressed https://fosdem.org/"$selected_year"/schedule/xml)
+# the sed allows to convert \ to \\ in XML to avoid shell expansion of escape character
+schedule_xml=$(curl -s -L --compressed https://fosdem.org/"$selected_year"/schedule/xml | sed 's/\\/\\\\/g')
 
 echo "Schedule downloaded"
 

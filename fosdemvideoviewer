@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# SPDX-License-Identifier: BSD-3-Clause
+# fosdemvideoplayer
+
 # Exit on error or Ctrl+C
 set -e
 
